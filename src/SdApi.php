@@ -3,6 +3,7 @@
 namespace Curio\SdClient;
 
 use Auth;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -41,16 +42,18 @@ class SdApi
 
         $this->log('START using access_token');
 
-        // TODO: Don't needlesly refresh the token
-        //if($access_token->isExpired())
+        $config = SdClientHelper::getTokenConfig();
+        $access_token_object = $config->parser()->parse((string) $access_token);
 
-        $this->log('access_token expired, trying to refresh');
-        $access_token = $this->refresh(session('refresh_token'));
+        if ($access_token_object->isExpired(Carbon::now())) {
+            $this->log('access_token expired, trying to refresh');
 
-        // else
-        // {
-        // 	$this->log('Succesfully using current access_token');
-        // }
+            $access_token = $this->refresh(session('refresh_token'));
+        } else {
+            $this->log('Succesfully using current access_token');
+
+            $access_token = $access_token_object->toString();
+        }
 
         $response = $this->client->request($method, 'https://api.curio.codes'.$endpoint, [
             'headers' => [

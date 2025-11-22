@@ -15,19 +15,19 @@ To use `sdclient` in your project:
 
     * `SD_CLIENT_ID`
     * `SD_CLIENT_SECRET`
-    * `SD_API_LOG` *(optional)*
+    * `SD_API_LOG` _(optional)_
         * _Default:_ `no`
         * Set to `yes` to make SdClient log all usage of access_tokens and refresh_tokens to the default log-channel.
-    * `SD_APP_FOR` *(optional)*
+    * `SD_APP_FOR` _(optional)_
         * _Default:_ `teachers`
         * This key determines if students can login to your application.
         * May be one of:
     * `all`: everyone can login, you may restrict access using guards or middleware.
     * `teachers`: a student will be completely blocked and no user will be created when they try to login.
-    * `SD_USE_MIGRATION` *(optional)*
+    * `SD_USE_MIGRATION` _(optional)_
         * _Default:_ `yes`
         * Set to no if you want to use your own migration instead of the users migration this package provides
-    * `SD_SSL_VERIFYPEER` *(optional)*
+    * `SD_SSL_VERIFYPEER` _(optional)_
         * _Default:_ `yes`
         * Set to `no` if you want to disable SSL verification. This is only recommended for during development and only on trusted networks.
 
@@ -75,7 +75,7 @@ After confirming a successful login with _sdlogin_, the `sdclient` package will 
 > ```php
 > Route::get('/sdclient/ready', function() {
 >   return redirect('/educations');
-> })
+> });
 > ```
 
 #### Handling errors (`/sdclient/error`)
@@ -94,7 +94,7 @@ If the user denies access to your application, or if something else goes wrong, 
 >   return view('errors.sdclient', compact('error', 'error_description'));
 >   // or simply:
 >   // return 'There was an error signing in: ' . $error_description . ' (' . $error . ')<br><a href="/login">Try again</a>';
-> })
+> });
 > ```
 
 ### 3️⃣ Logging out

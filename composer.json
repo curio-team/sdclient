@@ -6,6 +6,9 @@
     "authors": [
         {
             "name": "Bart Roos"
+        },
+        {
+            "name": "luttje"
         }
     ],
     "minimum-stability": "stable",
