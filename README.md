@@ -31,7 +31,7 @@ To use `sdclient` in your project:
         * _Default:_ `yes`
         * Set to `no` if you want to disable SSL verification. This is only recommended for during development and only on trusted networks.
 
-3. Alter your User model and add the line: `public $incrementing = false;`
+3. Alter your User model and add the lines: `public $incrementing = false;` and `protected $keyType = 'string';`
 
 4. _(Recommended)_ Remove any default users-migration from your app, because SdClient will conflict with it. Do _not_ remove the user-model. If you want to keep using your own migration, in your .env file set: `SD_USE_MIGRATION=no`.
 
