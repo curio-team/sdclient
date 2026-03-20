@@ -37,7 +37,9 @@ class SdClientHelper
         self::$cachedConfig = Configuration::forSymmetricSigner(
             new Sha256(),
             $signingKey
-        )->withValidationConstraints(
+        );
+
+        self::$cachedConfig->setValidationConstraints(
             new StrictValidAt(
                 new class(new DateTimeZone(\date_default_timezone_get())) implements ClockInterface {
                     public function __construct(private DateTimeZone $timezone) {}
