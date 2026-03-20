@@ -2,13 +2,14 @@
 
 namespace Curio\SdClient;
 
+use DateTimeImmutable;
 use DateTimeZone;
-use Lcobucci\Clock\SystemClock;
 use Lcobucci\JWT\Configuration;
 use Lcobucci\JWT\Signer\Hmac\Sha256;
 use Lcobucci\JWT\Signer\Key\InMemory;
 use Lcobucci\JWT\Validation\Constraint\SignedWith;
 use Lcobucci\JWT\Validation\Constraint\StrictValidAt;
+use Psr\Clock\ClockInterface;
 
 class SdClientHelper
 {
@@ -36,13 +37,16 @@ class SdClientHelper
         self::$cachedConfig = Configuration::forSymmetricSigner(
             new Sha256(),
             $signingKey
-        );
-
-        self::$cachedConfig->setValidationConstraints(
+        )->withValidationConstraints(
             new StrictValidAt(
-                new SystemClock(
-                    new DateTimeZone(\date_default_timezone_get()),
-                ),
+                new class(new DateTimeZone(\date_default_timezone_get())) implements ClockInterface {
+                    public function __construct(private DateTimeZone $timezone) {}
+
+                    public function now(): DateTimeImmutable
+                    {
+                        return new DateTimeImmutable('now', $this->timezone);
+                    }
+                },
                 // Fixes occasional "The token was issued in the future" when we're slow (e.g: when debugging with dd)
                 // Gives us a 1 minute leeway
                 new \DateInterval('PT1M')
