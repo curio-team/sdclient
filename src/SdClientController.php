@@ -27,7 +27,7 @@ class SdClientController extends Controller
         $callback_url = url('sdclient/callback');
         $root = config('sdclient.url');
 
-        return "$root/oauth/authorize?client_id=$client_id&redirect_id=$callback_url&response_type=code";
+        return "$root/oauth/authorize?client_id=$client_id&redirect_uri=$callback_url&response_type=code";
     }
 
     public function redirect()

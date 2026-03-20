@@ -8,6 +8,7 @@ use Curio\SdClient\Tests\TestCase;
 use GuzzleHttp\Client;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Response;
 use Lcobucci\JWT\Configuration;
 use Lcobucci\JWT\Signer\Hmac\Sha256;
@@ -15,6 +16,8 @@ use Lcobucci\JWT\Signer\Key\InMemory;
 
 class SdClientControllerTest extends TestCase
 {
+    private array $guzzleHistory = [];
+
     private function buildSignedTokens(string $userType = 'teacher'): object
     {
         $secret = config('sdclient.client_secret');
@@ -53,8 +56,10 @@ class SdClientControllerTest extends TestCase
 
     private function mockHttpClientFactory(array $responses): void
     {
+        $this->guzzleHistory = [];
         $mock = new MockHandler($responses);
         $handlerStack = HandlerStack::create($mock);
+        $handlerStack->push(Middleware::history($this->guzzleHistory));
         $mockClient = new Client(['handler' => $handlerStack]);
 
         $factory = $this->createMock(HttpClientFactory::class);
@@ -63,14 +68,16 @@ class SdClientControllerTest extends TestCase
         $this->app->instance(HttpClientFactory::class, $factory);
     }
 
-    public function test_redirect_url_contains_client_id()
+    public function test_redirect_url_contains_correct_oauth_params()
     {
         $response = $this->get('/sdclient/redirect');
 
         $response->assertRedirect();
         $location = $response->headers->get('Location');
-        $this->assertStringContainsString('client_id=test-client-id', $location);
         $this->assertStringContainsString('login.example.com/oauth/authorize', $location);
+        $this->assertStringContainsString('client_id=test-client-id', $location);
+        $this->assertStringContainsString('redirect_uri=', $location);
+        $this->assertStringContainsString('response_type=code', $location);
     }
 
     public function test_callback_with_error_redirects_to_error_page()
@@ -78,6 +85,30 @@ class SdClientControllerTest extends TestCase
         $response = $this->get('/sdclient/callback?error=access_denied&error_description=User+denied');
 
         $response->assertRedirect('/sdclient/error');
+    }
+
+    public function test_callback_sends_correct_token_exchange_request()
+    {
+        $tokens = $this->buildSignedTokens();
+
+        $this->mockHttpClientFactory([
+            new Response(200, ['Content-Type' => 'application/json'], json_encode($tokens)),
+        ]);
+
+        $this->get('/sdclient/callback?code=test-auth-code');
+
+        $this->assertCount(1, $this->guzzleHistory);
+
+        $request = $this->guzzleHistory[0]['request'];
+        $this->assertEquals('POST', $request->getMethod());
+        $this->assertEquals('https://login.example.com/oauth/token', (string) $request->getUri());
+
+        $body = (string) $request->getBody();
+        parse_str($body, $params);
+        $this->assertEquals('test-client-id', $params['client_id']);
+        $this->assertEquals('test-client-secret', $params['client_secret']);
+        $this->assertEquals('test-auth-code', $params['code']);
+        $this->assertEquals('authorization_code', $params['grant_type']);
     }
 
     public function test_callback_exchanges_code_and_creates_user()
