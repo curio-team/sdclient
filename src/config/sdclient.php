@@ -15,6 +15,11 @@ return [
     'app_for' => env('SD_APP_FOR', 'teachers'),
 
     /**
+     * The user model class used to find/create users on login.
+     */
+    'user_model' => env('SD_USER_MODEL', App\Models\User::class),
+
+    /**
      * Whether to use the migration file or not.
      */
     'use_migration' => env('SD_USE_MIGRATION', 'yes'),

@@ -13,10 +13,10 @@ class SdClientServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        $this->loadRoutesFrom(__DIR__.'/routes.php');
+        $this->loadRoutesFrom(__DIR__ . '/routes.php');
 
         if (config('sdclient.use_migration') == 'yes') {
-            $this->loadMigrationsFrom(__DIR__.'/migrations');
+            $this->loadMigrationsFrom(__DIR__ . '/migrations');
         }
     }
 
@@ -28,12 +28,14 @@ class SdClientServiceProvider extends ServiceProvider
     public function register()
     {
         $this->mergeConfigFrom(
-            __DIR__.'/config/sdclient.php', 'sdclient'
+            __DIR__ . '/config/sdclient.php',
+            'sdclient'
         );
 
-        $this->app->make('Curio\SdClient\SdClientController');
-        $this->app->singleton('Curio\SdApi', function () {
-            return new SdApi();
+        $this->app->singleton(HttpClientFactory::class);
+
+        $this->app->singleton('Curio\SdApi', function ($app) {
+            return new SdApi($app->make(HttpClientFactory::class));
         });
     }
 }

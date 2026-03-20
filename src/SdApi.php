@@ -2,8 +2,8 @@
 
 namespace Curio\SdClient;
 
-use Auth;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -13,15 +13,9 @@ class SdApi
 
     private $logging;
 
-    public function __construct()
+    public function __construct(HttpClientFactory $httpClientFactory)
     {
-        $config = [];
-
-        if (config('sdclient.ssl_verify_peer') === 'no') {
-            $config = ['curl' => [CURLOPT_SSL_VERIFYPEER => false]];
-        }
-
-        $this->client = new \GuzzleHttp\Client($config);
+        $this->client = $httpClientFactory->make();
         $this->logging = config('sdclient.api_log') == 'yes' ? true : false;
     }
 
@@ -55,10 +49,10 @@ class SdApi
             $access_token = $access_token_object->toString();
         }
 
-        $response = $this->client->request($method, 'https://api.curio.codes'.$endpoint, [
+        $response = $this->client->request($method, 'https://api.curio.codes' . $endpoint, [
             'headers' => [
                 'Accept' => 'application/json',
-                'Authorization' => 'Bearer '.$access_token,
+                'Authorization' => 'Bearer ' . $access_token,
             ],
         ]);
 
@@ -107,7 +101,7 @@ class SdApi
     private function log($msg)
     {
         if ($this->logging) {
-            Log::debug('AMOCLIENT ('.Auth::user()->id."): $msg");
+            Log::debug('AMOCLIENT (' . Auth::user()->id . "): $msg");
         }
     }
 }

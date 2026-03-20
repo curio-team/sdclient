@@ -3,14 +3,19 @@
 namespace Curio\SdClient;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Lcobucci\JWT\Validation\RequiredConstraintsViolated;
 
 class SdClientController extends Controller
 {
+    private HttpClientFactory $httpClientFactory;
+
+    public function __construct(HttpClientFactory $httpClientFactory)
+    {
+        $this->httpClientFactory = $httpClientFactory;
+    }
+
     public function redirectUrl()
     {
         $client_id = config('sdclient.client_id');
@@ -34,14 +39,8 @@ class SdClientController extends Controller
 
     public function callback(Request $request)
     {
-        $config = [];
         $root = config('sdclient.url');
-
-        if (config('sdclient.ssl_verify_peer') === 'no') {
-            $config = ['curl' => [CURLOPT_SSL_VERIFYPEER => false]];
-        }
-
-        $http = new \GuzzleHttp\Client($config);
+        $http = $this->httpClientFactory->make();
 
         if (isset($request->error)) {
             return redirect('/sdclient/error')
@@ -76,6 +75,7 @@ class SdClientController extends Controller
                 abort(400, $exception->getMessage());
             }
 
+            /** @var \Lcobucci\JWT\Token\Plain $token */
             $claims = $token->claims();
             $token_user = $claims->get('user');
             $token_user = json_decode($token_user);
@@ -86,9 +86,11 @@ class SdClientController extends Controller
             }
 
             //Create new user if not exists
-            $user = User::find($token_user->id);
+            $userModel = config('sdclient.user_model', \App\Models\User::class);
+            $user = $userModel::find($token_user->id);
             if (! $user) {
-                $user = new User();
+                /** @var \Illuminate\Foundation\Auth\User $user */
+                $user = new $userModel();
                 $user->id = $token_user->id;
                 $user->name = $token_user->name;
                 $user->email = $token_user->email;
@@ -108,7 +110,7 @@ class SdClientController extends Controller
 
             return redirect('/sdclient/ready');
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
-            abort(500, 'Unable to retrieve access token: '.$e->getResponse()->getBody());
+            abort(500, 'Unable to retrieve access token: ' . $e->getResponse()->getBody());
         }
     }
 

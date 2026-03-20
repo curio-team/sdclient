@@ -14,7 +14,8 @@
     "minimum-stability": "stable",
     "require": {
         "lcobucci/jwt": "4.0.4",
-        "guzzlehttp/guzzle": "^7.0"
+        "guzzlehttp/guzzle": "^7.0",
+        "illuminate/contracts": "^8.0|^9.0|^10.0"
     },
     "autoload": {
         "psr-4": {
@@ -29,6 +30,18 @@
         }
     },
     "require-dev": {
-        "laravel/pint": "^1.14"
+        "laravel/pint": "^1.14",
+        "orchestra/testbench": "^8.0|^9.0",
+        "phpunit/phpunit": "^10.0|^11.0"
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Curio\\SdClient\\Tests\\": "tests",
+            "App\\Models\\": "tests/Stubs",
+            "App\\Http\\Controllers\\": "tests/Stubs/Controllers"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit"
     }
 }

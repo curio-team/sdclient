@@ -14,6 +14,11 @@ class SdClientHelper
 {
     private static $cachedConfig = null;
 
+    public static function resetCache(): void
+    {
+        self::$cachedConfig = null;
+    }
+
     public static function getTokenConfig()
     {
         if (self::$cachedConfig !== null) {
