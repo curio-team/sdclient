@@ -105,8 +105,8 @@ class SdClientControllerTest extends TestCase
 
         $body = (string) $request->getBody();
         parse_str($body, $params);
-        $this->assertEquals('test-client-id', $params['client_id']);
-        $this->assertEquals('test-client-secret', $params['client_secret']);
+        $this->assertEquals(config('sdclient.client_id'), $params['client_id']);
+        $this->assertEquals(config('sdclient.client_secret'), $params['client_secret']);
         $this->assertStringContainsString('sdclient/callback', $params['redirect_uri']);
         $this->assertEquals('test-auth-code', $params['code']);
         $this->assertEquals('authorization_code', $params['grant_type']);

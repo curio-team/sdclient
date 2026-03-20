@@ -8,7 +8,7 @@ use Lcobucci\JWT\Configuration;
 use Lcobucci\JWT\Signer\Hmac\Sha256;
 use Lcobucci\JWT\Signer\Key\InMemory;
 use Lcobucci\JWT\Validation\Constraint\SignedWith;
-use Lcobucci\JWT\Validation\Constraint\ValidAt;
+use Lcobucci\JWT\Validation\Constraint\StrictValidAt;
 
 class SdClientHelper
 {
@@ -25,19 +25,21 @@ class SdClientHelper
             return self::$cachedConfig;
         }
 
-        $client_id = config('sdclient.client_secret');
+        $client_secret = config('sdclient.client_secret');
 
-        if ($client_id == null) {
+        if ($client_secret == null) {
             abort(500, 'Please set SD_CLIENT_ID and SD_CLIENT_SECRET in .env file.');
         }
 
+        $signingKey = InMemory::plainText($client_secret);
+
         self::$cachedConfig = Configuration::forSymmetricSigner(
             new Sha256(),
-            InMemory::plainText('')
+            $signingKey
         );
 
         self::$cachedConfig->setValidationConstraints(
-            new ValidAt(
+            new StrictValidAt(
                 new SystemClock(
                     new DateTimeZone(\date_default_timezone_get()),
                 ),
@@ -45,7 +47,7 @@ class SdClientHelper
                 // Gives us a 1 minute leeway
                 new \DateInterval('PT1M')
             ),
-            new SignedWith(new Sha256(), InMemory::plainText($client_id))
+            new SignedWith(new Sha256(), $signingKey)
         );
 
         return self::$cachedConfig;

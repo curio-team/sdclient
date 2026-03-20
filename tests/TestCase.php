@@ -27,7 +27,7 @@ abstract class TestCase extends OrchestraTestCase
         $app['config']->set('app.key', 'base64:' . base64_encode(random_bytes(32)));
         $app['config']->set('sdclient.url', 'https://login.example.com');
         $app['config']->set('sdclient.client_id', 'test-client-id');
-        $app['config']->set('sdclient.client_secret', 'test-client-secret');
+        $app['config']->set('sdclient.client_secret', 'test-client-secret-that-is-long-enough-for-hs256');
         $app['config']->set('sdclient.user_model', \App\Models\User::class);
         $app['config']->set('sdclient.app_for', 'teachers');
         $app['config']->set('sdclient.use_migration', 'yes');

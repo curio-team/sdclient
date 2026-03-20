@@ -164,8 +164,8 @@ class SdApiTest extends TestCase
         parse_str($body, $params);
         $this->assertEquals('refresh_token', $params['grant_type']);
         $this->assertEquals('my-refresh-token', $params['refresh_token']);
-        $this->assertEquals('test-client-id', $params['client_id']);
-        $this->assertEquals('test-client-secret', $params['client_secret']);
+        $this->assertEquals(config('sdclient.client_id'), $params['client_id']);
+        $this->assertEquals(config('sdclient.client_secret'), $params['client_secret']);
     }
 
     public function test_refresh_failure_aborts_with_redirect()
