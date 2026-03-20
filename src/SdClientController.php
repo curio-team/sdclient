@@ -54,6 +54,7 @@ class SdClientController extends Controller
                 'form_params' => [
                     'client_id' => config('sdclient.client_id'),
                     'client_secret' => config('sdclient.client_secret'),
+                    'redirect_uri' => url('sdclient/callback'),
                     'code' => $request->code,
                     'grant_type' => 'authorization_code',
                 ],
