@@ -23,11 +23,11 @@ class SdClientControllerTest extends TestCase
         $secret = config('sdclient.client_secret');
 
         $config = Configuration::forSymmetricSigner(
-            new Sha256(),
+            new Sha256,
             InMemory::plainText($secret)
         );
 
-        $now = new \DateTimeImmutable();
+        $now = new \DateTimeImmutable;
 
         $idToken = $config->builder()
             ->issuedAt($now)
@@ -186,6 +186,51 @@ class SdClientControllerTest extends TestCase
 
         $response->assertStatus(403);
         $this->assertDatabaseCount('users', 0);
+    }
+
+    public function test_callback_allows_admin_when_app_is_for_teachers()
+    {
+        $tokens = $this->buildSignedTokens('admin');
+
+        $this->mockHttpClientFactory([
+            new Response(200, ['Content-Type' => 'application/json'], json_encode($tokens)),
+        ]);
+
+        $response = $this->get('/sdclient/callback?code=test-auth-code');
+
+        $response->assertRedirect('/sdclient/ready');
+        $this->assertDatabaseCount('users', 1);
+        $this->assertDatabaseHas('users', ['type' => 'admin']);
+    }
+
+    public function test_callback_with_teacher_account_for_admins_only_app_is_forbidden()
+    {
+        config()->set('sdclient.app_for', 'admins');
+        $tokens = $this->buildSignedTokens('teacher');
+
+        $this->mockHttpClientFactory([
+            new Response(200, ['Content-Type' => 'application/json'], json_encode($tokens)),
+        ]);
+
+        $response = $this->get('/sdclient/callback?code=test-auth-code');
+
+        $response->assertStatus(403);
+        $this->assertDatabaseCount('users', 0);
+    }
+
+    public function test_callback_allows_admin_when_app_is_admins_only()
+    {
+        config()->set('sdclient.app_for', 'admins');
+        $tokens = $this->buildSignedTokens('admin');
+
+        $this->mockHttpClientFactory([
+            new Response(200, ['Content-Type' => 'application/json'], json_encode($tokens)),
+        ]);
+
+        $response = $this->get('/sdclient/callback?code=test-auth-code');
+
+        $response->assertRedirect('/sdclient/ready');
+        $this->assertDatabaseCount('users', 1);
     }
 
     public function test_callback_allows_student_when_app_not_for_teachers()

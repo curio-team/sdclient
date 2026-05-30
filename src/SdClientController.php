@@ -3,8 +3,12 @@
 namespace Curio\SdClient;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
+use GuzzleHttp\Exception\BadResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Lcobucci\JWT\Exception;
+use Lcobucci\JWT\Token\Plain;
 use Lcobucci\JWT\Validation\RequiredConstraintsViolated;
 
 class SdClientController extends Controller
@@ -49,7 +53,7 @@ class SdClientController extends Controller
         }
 
         try {
-            //Exchange authcode for tokens
+            // Exchange authcode for tokens
             $response = $http->post("$root/oauth/token", [
                 'form_params' => [
                     'client_id' => config('sdclient.client_id'),
@@ -65,7 +69,7 @@ class SdClientController extends Controller
 
             try {
                 $token = $config->parser()->parse($tokens->id_token);
-            } catch (\Lcobucci\JWT\Exception $exception) {
+            } catch (Exception $exception) {
                 abort(400, $exception->getMessage());
             }
 
@@ -76,22 +80,26 @@ class SdClientController extends Controller
                 abort(400, $exception->getMessage());
             }
 
-            /** @var \Lcobucci\JWT\Token\Plain $token */
+            /** @var Plain $token */
             $claims = $token->claims();
             $token_user = $claims->get('user');
             $token_user = json_decode($token_user);
 
-            //Check if user may login
-            if (config('sdclient.app_for') == 'teachers' && $token_user->type != 'teacher') {
+            // Check if user may login
+            if (config('sdclient.app_for') == 'teachers' && ! in_array($token_user->type, ['teacher', 'admin'])) {
                 abort(403, 'Oops: This app is only available to teacher-accounts!');
             }
 
-            //Create new user if not exists
-            $userModel = config('sdclient.user_model', \App\Models\User::class);
+            if (config('sdclient.app_for') == 'admins' && $token_user->type !== 'admin') {
+                abort(403, 'Oops: This app is only available to admin-accounts!');
+            }
+
+            // Create new user if not exists
+            $userModel = config('sdclient.user_model', User::class);
             $user = $userModel::find($token_user->id);
             if (! $user) {
                 /** @var \Illuminate\Foundation\Auth\User $user */
-                $user = new $userModel();
+                $user = new $userModel;
                 $user->id = $token_user->id;
                 $user->name = $token_user->name;
                 $user->email = $token_user->email;
@@ -105,13 +113,13 @@ class SdClientController extends Controller
 
             Auth::login($user, true);
 
-            //Store access- and refresh-token in session
+            // Store access- and refresh-token in session
             $request->session()->put('access_token', $tokens->access_token);
             $request->session()->put('refresh_token', $tokens->refresh_token);
 
             return redirect('/sdclient/ready');
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
-            abort(500, 'Unable to retrieve access token: ' . $e->getResponse()->getBody());
+        } catch (BadResponseException $e) {
+            abort(500, 'Unable to retrieve access token: '.$e->getResponse()->getBody());
         }
     }
 
