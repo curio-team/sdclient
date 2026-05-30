@@ -40,9 +40,9 @@ jobs:
 
       - name: Install dependencies
         run: |
-          composer require "laravel/framework:${{ matrix.laravel }}" \
-            "orchestra/testbench:${{ matrix.testbench }}" \
-            --no-update
+          composer require "laravel/framework:${{ matrix.laravel }}" --no-update
+          composer require --dev "orchestra/testbench:${{ matrix.testbench }}" --no-update
+          composer remove --dev psalm/plugin-laravel --no-update
           composer update --no-interaction --prefer-dist --optimize-autoloader
 
       - name: Run tests
