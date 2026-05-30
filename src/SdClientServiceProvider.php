@@ -28,7 +28,7 @@ class SdClientServiceProvider extends ServiceProvider
     public function register()
     {
         $this->mergeConfigFrom(
-            __DIR__ . '/config/sdclient.php',
+            __DIR__ . '/../config/sdclient.php',
             'sdclient'
         );
 

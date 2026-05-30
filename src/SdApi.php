@@ -110,7 +110,7 @@ class SdApi
     private function log($msg)
     {
         if ($this->logging) {
-            Log::debug('AMOCLIENT (' . Auth::user()->id . "): $msg");
+            Log::debug('AMOCLIENT (' . (string) Auth::id() . "): $msg");
         }
     }
 }

@@ -1,0 +1,33 @@
+name: PHPStan
+
+on:
+  pull_request:
+    branches:
+    - main
+  push:
+    branches:
+    - main
+
+jobs:
+  phpstan:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Setup PHP
+      uses: shivammathur/setup-php@2.37.1
+      with:
+        php-version: 8.3
+
+    - uses: actions/checkout@v3
+
+    - name: Install Dependencies
+      run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+
+    - name: Install NPM dependencies
+      run: npm ci
+
+    - name: Compile assets
+      run: npm run build
+
+    - name: Run PHPStan
+      run: vendor/bin/phpstan analyse --no-progress

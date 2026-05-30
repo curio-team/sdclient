@@ -26,22 +26,24 @@ class SdClientHelper
             return self::$cachedConfig;
         }
 
+        /** @var string|null $client_secret */
         $client_secret = config('sdclient.client_secret');
 
-        if ($client_secret == null) {
+        if (! is_string($client_secret)) {
             abort(500, 'Please set SD_CLIENT_ID and SD_CLIENT_SECRET in .env file.');
         }
 
         $signingKey = InMemory::plainText($client_secret);
 
         self::$cachedConfig = Configuration::forSymmetricSigner(
-            new Sha256(),
+            new Sha256,
             $signingKey
         );
 
         self::$cachedConfig->setValidationConstraints(
             new StrictValidAt(
-                new class(new DateTimeZone(\date_default_timezone_get())) implements ClockInterface {
+                new class(new DateTimeZone(\date_default_timezone_get())) implements ClockInterface
+                {
                     public function __construct(private DateTimeZone $timezone) {}
 
                     public function now(): DateTimeImmutable
@@ -53,7 +55,7 @@ class SdClientHelper
                 // Gives us a 1 minute leeway
                 new \DateInterval('PT1M')
             ),
-            new SignedWith(new Sha256(), $signingKey)
+            new SignedWith(new Sha256, $signingKey)
         );
 
         return self::$cachedConfig;

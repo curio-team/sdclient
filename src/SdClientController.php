@@ -22,9 +22,10 @@ class SdClientController extends Controller
 
     public function redirectUrl()
     {
+        /** @var string|null $client_id */
         $client_id = config('sdclient.client_id');
 
-        if ($client_id == null) {
+        if (! is_string($client_id)) {
             abort(500, 'Please set SD_CLIENT_ID and SD_CLIENT_SECRET in .env file.');
         }
 
@@ -100,10 +101,10 @@ class SdClientController extends Controller
             if (! $user) {
                 /** @var \Illuminate\Foundation\Auth\User $user */
                 $user = new $userModel;
-                $user->id = $token_user->id;
-                $user->name = $token_user->name;
-                $user->email = $token_user->email;
-                $user->type = $token_user->type;
+                $user->setAttribute('id', $token_user->id);
+                $user->setAttribute('name', $token_user->name);
+                $user->setAttribute('email', $token_user->email);
+                $user->setAttribute('type', $token_user->type);
                 $user->save();
             } else {
                 // Update the user name if exists
