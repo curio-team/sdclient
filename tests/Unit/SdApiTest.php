@@ -24,11 +24,11 @@ class SdApiTest extends TestCase
         $secret = config('sdclient.client_secret');
 
         $config = Configuration::forSymmetricSigner(
-            new Sha256(),
+            new Sha256,
             InMemory::plainText($secret)
         );
 
-        $now = new \DateTimeImmutable();
+        $now = new \DateTimeImmutable;
 
         return $config->builder()
             ->issuedAt($now)
@@ -92,7 +92,7 @@ class SdApiTest extends TestCase
 
         $request = $this->guzzleHistory[0]['request'];
         $this->assertEquals('GET', $request->getMethod());
-        $this->assertEquals('https://api.curio.codes/user', (string) $request->getUri());
+        $this->assertEquals('https://login.example.com/api/user', (string) $request->getUri());
         $this->assertEquals('application/json', $request->getHeaderLine('Accept'));
         $this->assertStringStartsWith('Bearer ', $request->getHeaderLine('Authorization'));
     }
@@ -110,7 +110,7 @@ class SdApiTest extends TestCase
         $api->get('courses');
 
         $request = $this->guzzleHistory[0]['request'];
-        $this->assertEquals('https://api.curio.codes/courses', (string) $request->getUri());
+        $this->assertEquals('https://login.example.com/api/courses', (string) $request->getUri());
     }
 
     public function test_get_refreshes_expired_token()
