@@ -3,7 +3,7 @@ name: Tests
 on:
   push:
     branches:
-      - main
+    - main
 
 jobs:
   test:
@@ -11,39 +11,40 @@ jobs:
 
     strategy:
       matrix:
-        php: ["8.1", "8.2", "8.3"]
-        laravel: ["10.*", "11.*", "12.*"]
+        php: [ "8.1", "8.2", "8.3" ]
+        laravel: [ "10.*", "11.*", "12.*" ]
         include:
-          - laravel: "10.*"
-            testbench: "^8.0"
-          - laravel: "11.*"
-            testbench: "^9.0"
-          - laravel: "12.*"
-            testbench: "^10.0"
+        - laravel: "10.*"
+          testbench: "^8.0"
+        - laravel: "11.*"
+          testbench: "^9.0"
+        - laravel: "12.*"
+          testbench: "^10.0"
         exclude:
-          - php: "8.1"
-            laravel: "11.*"
-          - php: "8.1"
-            laravel: "12.*"
+        - php: "8.1"
+          laravel: "11.*"
+        - php: "8.1"
+          laravel: "12.*"
 
     name: PHP ${{ matrix.php }} / Laravel ${{ matrix.laravel }}
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    - name: Checkout
+      uses: actions/checkout@v4
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ matrix.php }}
-          coverage: none
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ matrix.php }}
+        coverage: none
 
-      - name: Install dependencies
-        run: |
-          composer require "laravel/framework:${{ matrix.laravel }}" --no-update
-          composer require --dev "orchestra/testbench:${{ matrix.testbench }}" --no-update
-          composer remove --dev psalm/plugin-laravel --no-update
-          composer update --no-interaction --prefer-dist --optimize-autoloader
+    - name: Install dependencies
+      run: |
+        composer remove --dev psalm/plugin-laravel --no-update
+        composer require "laravel/framework:${{ matrix.laravel }}" \
+          "orchestra/testbench:${{ matrix.testbench }}" \
+          --no-update
+        composer update --no-interaction --prefer-dist --optimize-autoloader
 
-      - name: Run tests
-        run: vendor/bin/phpunit
+    - name: Run tests
+      run: vendor/bin/phpunit
