@@ -103,7 +103,7 @@ class SdClientController extends Controller
                 $user->save();
             }
 
-            Auth::login($user);
+            Auth::login($user, true);
 
             //Store access- and refresh-token in session
             $request->session()->put('access_token', $tokens->access_token);

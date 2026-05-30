@@ -29,7 +29,9 @@ class SdApi
         $access_token = session('access_token');
 
         if ($access_token == null) {
-            abort(401, 'No access token: probably not logged-in');
+            // Session expired — redirect through sdlogin to silently re-authorize.
+            $controller = app(\Curio\SdClient\SdClientController::class);
+            abort(302, '', ['Location' => $controller->redirectUrl()]);
         }
 
         $endpoint = Str::start($endpoint, '/');
@@ -49,7 +51,14 @@ class SdApi
             $access_token = $access_token_object->toString();
         }
 
-        $response = $this->client->request($method, 'https://api.curio.codes' . $endpoint, [
+        $apiUrl = 'https://api.curio.codes';
+
+        if (config('sdclient.url')) {
+            // Use /api on dev domain instead for testing against staging or local environments
+            $apiUrl = rtrim(config('sdclient.url'), '/') . '/api';
+        }
+
+        $response = $this->client->request($method, $apiUrl . $endpoint, [
             'headers' => [
                 'Accept' => 'application/json',
                 'Authorization' => 'Bearer ' . $access_token,
