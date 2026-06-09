@@ -107,8 +107,10 @@ class SdClientController extends Controller
                 $user->setAttribute('type', $token_user->type);
                 $user->save();
             } else {
-                // Update the user name if exists
-                $user->name = $token_user->name;
+                // Update the user information if it exists
+                $user->setAttribute('name', $token_user->name);
+                $user->setAttribute('email', $token_user->email);
+                $user->setAttribute('type', $token_user->type);
                 $user->save();
             }
 
