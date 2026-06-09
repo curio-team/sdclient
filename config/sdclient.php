@@ -6,7 +6,7 @@ return [
     /**
      * The URL of the SD server, useful to override with a local server for development.
      */
-    'url' => env('SD_DEV_URL', 'https://login.curio.codes'),
+    'url' => env('SD_DEV_URL', 'https://api.curio.codes'),
 
     /**
      * The client_id and client_secret of the application.

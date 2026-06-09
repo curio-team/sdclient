@@ -3,6 +3,7 @@
 namespace Curio\SdClient;
 
 use Carbon\Carbon;
+use GuzzleHttp\Exception\ClientException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -30,7 +31,7 @@ class SdApi
 
         if ($access_token == null) {
             // Session expired — redirect through sdlogin to silently re-authorize.
-            $controller = app(\Curio\SdClient\SdClientController::class);
+            $controller = app(SdClientController::class);
             abort(302, '', ['Location' => $controller->redirectUrl()]);
         }
 
@@ -53,15 +54,15 @@ class SdApi
 
         $apiUrl = 'https://api.curio.codes';
 
-        if (config('sdclient.url')) {
+        if (! str_starts_with(config('sdclient.url'), $apiUrl)) {
             // Use /api on dev domain instead for testing against staging or local environments
-            $apiUrl = rtrim(config('sdclient.url'), '/') . '/api';
+            $apiUrl = rtrim(config('sdclient.url'), '/').'/api';
         }
 
-        $response = $this->client->request($method, $apiUrl . $endpoint, [
+        $response = $this->client->request($method, $apiUrl.$endpoint, [
             'headers' => [
                 'Accept' => 'application/json',
-                'Authorization' => 'Bearer ' . $access_token,
+                'Authorization' => 'Bearer '.$access_token,
             ],
         ]);
 
@@ -93,7 +94,7 @@ class SdApi
             session()->put('refresh_token', $tokens->refresh_token);
 
             return $access_token;
-        } catch (\GuzzleHttp\Exception\ClientException $e) {
+        } catch (ClientException $e) {
             $this->log('refreshing token failed, redirecting for authorization');
             $controller = app('Curio\SdClient\SdClientController');
             $redirector = $controller->redirect();
@@ -110,7 +111,7 @@ class SdApi
     private function log($msg)
     {
         if ($this->logging) {
-            Log::debug('AMOCLIENT (' . (string) Auth::id() . "): $msg");
+            Log::debug('AMOCLIENT ('.(string) Auth::id()."): $msg");
         }
     }
 }
