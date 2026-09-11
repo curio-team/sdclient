@@ -107,10 +107,7 @@ Send your user to `/sdclient/logout`.
 
 ## 📈 SdApi
 
-Apart from being the central login-server, _login.amo.rocks_ also exposes an api. Please note this api is currently undocumented, although there are options to explore the api:
-
-* Refer to _sdlogin_'s [routes/api.php](https://github.com/curio-team/sdlogin/blob/main/routes/api.php) file.
-* Play around at [apitest.curio.codes](https://apitest.curio.codes/).
+Apart from being the central login-server, _login.amo.rocks_ also exposes an api. Please note this api is currently undocumented, although there is an option to explore the api: refer to _sdlogin_'s [routes/api.php](https://github.com/curio-team/sdlogin/blob/main/routes/api.php) file.
 
 ### SdClient API Interface
 
