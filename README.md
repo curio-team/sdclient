@@ -82,6 +82,9 @@ After confirming a successful login with _sdlogin_, the `sdclient` package will 
 
 If the user denies access to your application, or if something else goes wrong, the user will be redirected to `/sdclient/error`. The error and error_description will be stored in the session (as `sdclient.error` and `sdclient.error_description` respectively).
 
+> [!WARNING]
+> These values are taken directly from the callback's query string, so anyone can craft a link that fills them with arbitrary content. Always escape them before outputting them (e.g. `{{ $error_description }}` in Blade, never `{!! $error_description !!}`).
+
 > **Example:**
 >
 > Define a route in your applications `routes/web.php` file to handle this:
@@ -93,7 +96,7 @@ If the user denies access to your application, or if something else goes wrong, 
 >
 >   return view('errors.sdclient', compact('error', 'error_description'));
 >   // or simply:
->   // return 'There was an error signing in: ' . $error_description . ' (' . $error . ')<br><a href="/login">Try again</a>';
+>   // return 'There was an error signing in: ' . e($error_description) . ' (' . e($error) . ')<br><a href="/login">Try again</a>';
 > });
 > ```
 
