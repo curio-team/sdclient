@@ -3,70 +3,13 @@
 namespace Curio\SdClient\Tests\Feature;
 
 use App\Models\User;
-use Curio\SdClient\HttpClientFactory;
+use Curio\SdClient\Tests\Concerns\InteractsWithSdLogin;
 use Curio\SdClient\Tests\TestCase;
-use GuzzleHttp\Client;
-use GuzzleHttp\Handler\MockHandler;
-use GuzzleHttp\HandlerStack;
-use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Response;
-use Lcobucci\JWT\Configuration;
-use Lcobucci\JWT\Signer\Hmac\Sha256;
-use Lcobucci\JWT\Signer\Key\InMemory;
 
 class SdClientControllerTest extends TestCase
 {
-    private array $guzzleHistory = [];
-
-    private function buildSignedTokens(string $userType = 'teacher'): object
-    {
-        $secret = config('sdclient.client_secret');
-
-        $config = Configuration::forSymmetricSigner(
-            new Sha256,
-            InMemory::plainText($secret)
-        );
-
-        $now = new \DateTimeImmutable;
-
-        $idToken = $config->builder()
-            ->issuedAt($now)
-            ->canOnlyBeUsedAfter($now)
-            ->expiresAt($now->modify('+1 hour'))
-            ->withClaim('user', json_encode([
-                'id' => 'user-123',
-                'name' => 'Test User',
-                'email' => 'test@example.com',
-                'type' => $userType,
-            ]))
-            ->getToken($config->signer(), $config->signingKey());
-
-        $accessToken = $config->builder()
-            ->issuedAt($now)
-            ->canOnlyBeUsedAfter($now)
-            ->expiresAt($now->modify('+1 hour'))
-            ->getToken($config->signer(), $config->signingKey());
-
-        return (object) [
-            'id_token' => $idToken->toString(),
-            'access_token' => $accessToken->toString(),
-            'refresh_token' => 'fake-refresh-token',
-        ];
-    }
-
-    private function mockHttpClientFactory(array $responses): void
-    {
-        $this->guzzleHistory = [];
-        $mock = new MockHandler($responses);
-        $handlerStack = HandlerStack::create($mock);
-        $handlerStack->push(Middleware::history($this->guzzleHistory));
-        $mockClient = new Client(['handler' => $handlerStack]);
-
-        $factory = $this->createMock(HttpClientFactory::class);
-        $factory->method('make')->willReturn($mockClient);
-
-        $this->app->instance(HttpClientFactory::class, $factory);
-    }
+    use InteractsWithSdLogin;
 
     public function test_redirect_url_contains_correct_oauth_params()
     {
@@ -82,7 +25,7 @@ class SdClientControllerTest extends TestCase
 
     public function test_callback_with_error_redirects_to_error_page()
     {
-        $response = $this->get('/sdclient/callback?error=access_denied&error_description=User+denied');
+        $response = $this->get('/sdclient/callback?error=access_denied&error_description=User+denied&state=' . $this->startLogin());
 
         $response->assertRedirect('/sdclient/error');
     }
@@ -95,7 +38,7 @@ class SdClientControllerTest extends TestCase
             new Response(200, ['Content-Type' => 'application/json'], json_encode($tokens)),
         ]);
 
-        $this->get('/sdclient/callback?code=test-auth-code');
+        $this->get('/sdclient/callback?code=test-auth-code&state=' . $this->startLogin());
 
         $this->assertCount(1, $this->guzzleHistory);
 
@@ -122,7 +65,7 @@ class SdClientControllerTest extends TestCase
 
         $this->assertDatabaseCount('users', 0);
 
-        $response = $this->get('/sdclient/callback?code=test-auth-code');
+        $response = $this->get('/sdclient/callback?code=test-auth-code&state=' . $this->startLogin());
 
         $response->assertRedirect('/sdclient/ready');
         $this->assertDatabaseCount('users', 1);
@@ -150,7 +93,7 @@ class SdClientControllerTest extends TestCase
             new Response(200, ['Content-Type' => 'application/json'], json_encode($tokens)),
         ]);
 
-        $response = $this->get('/sdclient/callback?code=test-auth-code');
+        $response = $this->get('/sdclient/callback?code=test-auth-code&state=' . $this->startLogin());
 
         $response->assertRedirect('/sdclient/ready');
         $this->assertDatabaseCount('users', 1);
@@ -168,7 +111,7 @@ class SdClientControllerTest extends TestCase
             new Response(200, ['Content-Type' => 'application/json'], json_encode($tokens)),
         ]);
 
-        $this->get('/sdclient/callback?code=test-auth-code');
+        $this->get('/sdclient/callback?code=test-auth-code&state=' . $this->startLogin());
 
         $this->assertEquals($tokens->access_token, session('access_token'));
         $this->assertEquals($tokens->refresh_token, session('refresh_token'));
@@ -182,7 +125,7 @@ class SdClientControllerTest extends TestCase
             new Response(200, ['Content-Type' => 'application/json'], json_encode($tokens)),
         ]);
 
-        $response = $this->get('/sdclient/callback?code=test-auth-code');
+        $response = $this->get('/sdclient/callback?code=test-auth-code&state=' . $this->startLogin());
 
         $response->assertStatus(403);
         $this->assertDatabaseCount('users', 0);
@@ -196,7 +139,7 @@ class SdClientControllerTest extends TestCase
             new Response(200, ['Content-Type' => 'application/json'], json_encode($tokens)),
         ]);
 
-        $response = $this->get('/sdclient/callback?code=test-auth-code');
+        $response = $this->get('/sdclient/callback?code=test-auth-code&state=' . $this->startLogin());
 
         $response->assertRedirect('/sdclient/ready');
         $this->assertDatabaseCount('users', 1);
@@ -212,7 +155,7 @@ class SdClientControllerTest extends TestCase
             new Response(200, ['Content-Type' => 'application/json'], json_encode($tokens)),
         ]);
 
-        $response = $this->get('/sdclient/callback?code=test-auth-code');
+        $response = $this->get('/sdclient/callback?code=test-auth-code&state=' . $this->startLogin());
 
         $response->assertStatus(403);
         $this->assertDatabaseCount('users', 0);
@@ -227,7 +170,7 @@ class SdClientControllerTest extends TestCase
             new Response(200, ['Content-Type' => 'application/json'], json_encode($tokens)),
         ]);
 
-        $response = $this->get('/sdclient/callback?code=test-auth-code');
+        $response = $this->get('/sdclient/callback?code=test-auth-code&state=' . $this->startLogin());
 
         $response->assertRedirect('/sdclient/ready');
         $this->assertDatabaseCount('users', 1);
@@ -242,7 +185,7 @@ class SdClientControllerTest extends TestCase
             new Response(200, ['Content-Type' => 'application/json'], json_encode($tokens)),
         ]);
 
-        $response = $this->get('/sdclient/callback?code=test-auth-code');
+        $response = $this->get('/sdclient/callback?code=test-auth-code&state=' . $this->startLogin());
 
         $response->assertRedirect('/sdclient/ready');
         $this->assertDatabaseCount('users', 1);
@@ -254,7 +197,7 @@ class SdClientControllerTest extends TestCase
             new Response(400, [], json_encode(['error' => 'invalid_grant'])),
         ]);
 
-        $response = $this->get('/sdclient/callback?code=bad-code');
+        $response = $this->get('/sdclient/callback?code=bad-code&state=' . $this->startLogin());
 
         $response->assertStatus(500);
     }
