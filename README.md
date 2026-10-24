@@ -82,8 +82,10 @@ After confirming a successful login with _sdlogin_, the `sdclient` package will 
 
 If the user denies access to your application, or if something else goes wrong, the user will be redirected to `/sdclient/error`. The error and error_description will be stored in the session (as `sdclient.error` and `sdclient.error_description` respectively).
 
+If the callback doesn't belong to a login that was started in the user's own session (e.g. the login expired, or someone sent the user a forged callback link), the error will be `invalid_state`.
+
 > [!WARNING]
-> These values are taken directly from the callback's query string, so anyone can craft a link that fills them with arbitrary content. Always escape them before outputting them (e.g. `{{ $error_description }}` in Blade, never `{!! $error_description !!}`).
+> These values are taken from the callback's query string. Always escape them before outputting them (e.g. `{{ $error_description }}` in Blade, never `{!! $error_description !!}`).
 
 > **Example:**
 >
@@ -102,7 +104,7 @@ If the user denies access to your application, or if something else goes wrong, 
 
 ### 3️⃣ Logging out
 
-Send your user to `/sdclient/logout`.
+Send your user to `/sdclient/logout`. This logs the user out and clears their session, including the stored access- and refresh-token.
 
 > [!NOTE]
 > A real logout cannot be accomplished at this time. If you log-out of your app, but are still logged-in to the _sdlogin_-server, this will have no effect.
